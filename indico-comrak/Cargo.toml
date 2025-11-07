@@ -1,0 +1,9 @@
+[package]
+name = "indico-comrak"
+version = "0.1.0"
+authors = ["Indico Team <indico-team@cern.ch>"]
+edition = "2024"
+
+[dependencies]
+comrak = { git = "https://github.com/kivikakk/comrak.git", version = "0.47.0", default-features = false }
+regex-lite = "^0.1"

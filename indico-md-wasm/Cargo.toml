@@ -1,0 +1,16 @@
+[package]
+name = "indico-md-wasm"
+version = "0.1.0"
+authors = ["Indico Team <indico-team@cern.ch>"]
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = "0.2.84"
+js-sys = "^0.3"
+indico-comrak = { path = "../indico-comrak" }
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.34"
