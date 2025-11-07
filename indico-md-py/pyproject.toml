@@ -1,0 +1,21 @@
+[project]
+name = "indico-md"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+dynamic = ["version"]
+
+[build-system]
+requires = ["maturin>=1.9,<2.0"]
+build-backend = "maturin"
+
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
