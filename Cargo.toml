@@ -1,0 +1,12 @@
+[workspace]
+members = [
+    "indico-comrak",
+    "indico-md-wasm",
+    "indico-md-py"
+]
+resolver = "3"
+
+[profile.release]
+opt-level = 'z'
+lto = true
+codegen-units = 1

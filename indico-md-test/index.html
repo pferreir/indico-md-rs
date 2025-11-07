@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Indico Markdown Live Test</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        textarea {
+            width: 50%;
+            height: 100vh;
+            border: none;
+            resize: none;
+            padding: 16px;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'JetBrains Mono', 'Fira Code', Consolas, 'Courier New', monospace;
+        }
+        .preview {
+            width: 50%;
+            height: 100vh;
+            border-left: 1px solid #2d2d2d;
+            padding: 24px;
+            box-sizing: border-box;
+            background: #ffffff;
+            overflow-y: auto;
+            font-size: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #24292f;
+            line-height: 1.6;
+            word-wrap: break-word;
+            max-width: 50%;
+        }
+
+        /* Headings */
+        .preview h1, .preview h2, .preview h3, .preview h4, .preview h5, .preview h6 {
+            font-weight: 700;
+            margin: 1.5em 0 0.5em;
+            line-height: 1.3;
+            color: #0f172a;
+        }
+        .preview h1 { 
+            font-size: 2em;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.3em;
+        }
+        .preview h2 { 
+            font-size: 1.5em;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 0.2em;
+        }
+        .preview h3 { font-size: 1.25em; }
+
+        /* Links */
+        .preview a { 
+            color: #2563eb;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .preview a:hover { 
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+
+        /* Notes and alerts */
+        .preview .markdown-alert {
+            padding: 0.8em 1em;
+            margin: 1em 0;
+            border-left: 4px solid;
+            border-radius: 4px;
+        }
+
+        .preview .markdown-alert-note {
+            background-color: #f6f8fa;
+            border-left-color: #0969da;
+        }
+
+        .preview .markdown-alert-title {
+            font-weight: 600;
+            margin: 0 0 0.5em 0;
+            color: #0969da;
+        }
+
+        /* Inline code & code blocks */
+        .preview code {
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Consolas, monospace;
+            font-size: 0.9em;
+            color: #404040;
+        }
+        .preview pre {
+            background: #0f172a;
+            padding: 16px;
+            border-radius: 8px;
+            overflow: auto;
+            margin: 1em 0;
+
+            code {
+                color: #e2e8f0;
+                font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Consolas, monospace;
+                font-size: 0.9em;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+        }
+
+        /* Blockquotes */
+        .preview blockquote {
+            border-left: 4px solid #3b82f6;
+            margin: 1em 0;
+            padding: 0.5em 1em;
+            color: #4b5563;
+            background: #f8fafc;
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* Lists */
+        .preview ul, .preview ol {
+            margin: 0.5em 0 1em 1.5em;
+            padding-left: 0.5em;
+        }
+        .preview li {
+            margin: 0.3em 0;
+        }
+
+        /* Tables */
+        .preview table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .preview th {
+            background: #f8fafc;
+            font-weight: 600;
+        }
+        .preview th, .preview td {
+            border: 1px solid #e2e8f0;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .preview tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        /* Horizontal rule */
+        .preview hr {
+            height: 1px;
+            border: none;
+            background: #e6e6e6;
+            margin: 1em 0;
+        }
+
+        /* Images */
+        .preview img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0.4em 0;
+        }
+    </style>
+    <script type="module">
+        import init, {indicoMarkdown} from './pkg/indico_md_wasm.js';
+        await init();
+
+        const editor = document.getElementById('editor');
+        const preview = document.getElementById('preview');
+        const rules = [
+            [/\b(OTG\d{7})\b/, 'https://cern.service-now.com/service-portal?id=outage&n={1}']
+        ];
+
+        editor.addEventListener('input', () => {
+            preview.innerHTML = indicoMarkdown(editor.value, rules);
+            document.querySelectorAll('[data-math-style="display"]').forEach(async e => {
+                let math = MathJax.tex2mml(e.textContent);
+                e.innerHTML = math;
+            });
+            document.querySelectorAll('[data-math-style="inline"]').forEach(async e => {
+                let math = MathJax.tex2mml(e.textContent, {display: false});
+                e.innerHTML = math;
+            });
+        });
+    </script>
+    <script>
+        MathJax = {
+            startup: {
+                elements: [],
+                typeset: false,
+                pageReady: () => {
+                    setTimeout(500, () => editor.dispatchEvent(new Event('input')));
+                }
+            }
+        };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-svg.js"></script>
+</head>
+<body>
+    <div class="container">
+        <textarea id="editor" placeholder="Type here...">
+# Rust-generated Indico Markdown! 🦀
+
+*Rust Markdown goes brrrrr*
+(no, this isn't CodiMD)
+
+## What is this?
+
+In Indico, we're currently relying on the [python-markdown](https://pypi.org/project/Markdown/) and [react-markdown](https://github.com/remarkjs/react-markdown) libs. They're great, but as most Markdown libs, they implement Markdown [**their own way**](https://gist.github.com/vimtaai/99f8c89e7d3d02a362117284684baa0f).
+As a consequence, you very often get different rendering results depending on whether you were writing stuff down or reading it back afterwards.
+
+This is where this package comes in - it uses the same code to generate Markdown on Python and JavaScript. How? Thanks to the magic of WASM! We can compile the same code into a server package and into WASM, and we're sure it's going to give us the same result given the same input!
+
+### Why Rust?
+
+Rust is the language with probably (as of 2025) the best support for WASM, and there is ample tooling and library support to generate packages usable in both Python and JS environments.
+
+We can count on some Rust libraries to help us bridge with the two environments:
+ * for JS, [`wasm-bindgen`](https://wasm-bindgen.github.io/) and [`wasm-pack`](https://github.com/drager/wasm-pack): `wasm-bindgen` handles the binding between Rust-generated WASM and JS, and `wasm-pack` facilitates the compilation;
+ * for Python, [PyO3](https://pyo3.rs) allows us to easily build Python packages from Rust.
+
+There is a great Rust Markdown library called [comrak](https://github.com/kivikakk/comrak), which implements most of the things we need. We actually [contributed highlighting to it](https://github.com/kivikakk/comrak/pull/672), which was the only piece which was missing. We also had to implement some extra magic to support CERN-style OTG1234567 auto-links, but it wasn't that hard.
+
+### Advantages of this Implementation
+ * Same Markdown syntax on client and server side;
+ * [x] Some additional features like task lists;
+ * Fixes some annoying issues in Indico's current implementation
+   - such as differences in handling of space indentation of item sublists;
+   - and lack of support for ==highlighting on the client side==.
+
+## SURPRISE!
+
+![](https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.imgflip.com%2F1xc8cq.jpg&f=1&nofb=1&ipt=a74e7f25bc5051a3f06330668e966175ac54e8545d3fa65d82eedffaf1965da4)
+
+**What if I told you what you are seeing on this page is being rendered by our Rust-powered Indico Markdown library, compiled to WASM?**
+
+## Some tests
+
+* This is markdown
+* Moar markdown
+* ==Important==
+* OTG1234123: check noats
+  - sublevels
+  - moar sublevels
+* Hello `pre`
+
+```
+Some code
+Some more code
+```
+
+### OMG TASK LISTS!
+ * [ ] Task
+ * [x] ANOTHER TASK
+
+... and blockquotes.
+
+> A blockquote
+> which continues here
+
+## THAT'S NOT ALL!
+
+This thing is capable of escaping MathJax formulas, whether they are inline, like $E = mc^2$.
+
+Or in display mode: 
+
+$$
+x = {-b \pm \sqrt{b^2-4ac} \over 2a}
+$$
+
+> [!note]
+> MathJax is actually rendering them afterwards, but ~~don't tell anyone~~
+
+|OMG A table!|with columns|wow! unbelievable|
+|-|-|-|
+|1|2|3|4|
+|and rows? are you kidding?|||
+|||I'm in disbelief!|
+        </textarea>
+    <div class="preview" id="preview"></div>
+    </div>
+</body>
+</html>
