@@ -1,6 +1,6 @@
 [package]
 name = "indico-comrak"
-version = "0.1.0"
+version = "0.0.5"
 authors = ["Indico Team <indico-team@cern.ch>"]
 edition = "2024"
 

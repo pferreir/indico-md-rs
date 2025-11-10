@@ -177,6 +177,7 @@ pub fn indico_markdown(md_source: &str, autolink_rules: &[LinkRule]) -> Result<S
     options.extension.math_dollars = true;
     options.extension.underline = true;
     options.extension.highlight = true;
+    options.render.r#unsafe = true;
 
     let arena = Arena::new();
     let mut root = parse_document(&arena, md_source, &options);
@@ -251,3 +252,22 @@ and <a href=\"FOOBAR\" title=\"BAR\">BAR</a> is <a href=\"FOOBAR\" title=\"BAR\"
         );
     }
 }
+
+
+    #[test]
+    fn test_raw_html() {
+        // raw HTML should be escaped when tagfilter is enabled
+        let md = "<script>alert('x')</script>";
+        let html = indico_markdown(md, &[]).unwrap();
+        assert_eq!(html, "&lt;script>alert('x')&lt;/script>\n");
+
+        // raw HTML should not be autolinked (raw HTML becomes a raw node, not text)
+        let md = "<div>FOO</div>";
+        let html = indico_markdown(md, &[LinkRule::new(r"FOO", "https://example/{0}").unwrap()]).unwrap();
+        assert_eq!(html, "<div>FOO</div>\n");
+
+        // inline HTML-like tags are also escaped rather than rendered
+        let md = "A <b>bold</b> move";
+        let html = indico_markdown(md, &[]).unwrap();
+        assert_eq!(html, "<p>A <b>bold</b> move</p>\n");
+    }

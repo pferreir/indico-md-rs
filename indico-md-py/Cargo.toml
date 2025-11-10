@@ -1,6 +1,6 @@
 [package]
 name = "indico-md-py"
-version = "0.0.2"
+version = "0.0.5"
 authors = ["Indico Team <indico-team@cern.ch>"]
 edition = "2024"
 
