@@ -172,28 +172,64 @@
             display: block;
             margin: 0.4em 0;
         }
+        /* small toolbar */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px;
+            background: #fafafa;
+            border-bottom: 1px solid #e6e6e6;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #222;
+        }
     </style>
     <script type="module">
-        import init, {indicoMarkdown} from './pkg/indico_md_wasm.js';
+        import init, {toHtml, toUnstyledHtml} from './pkg/indico_md_wasm.js';
         await init();
 
         const editor = document.getElementById('editor');
         const preview = document.getElementById('preview');
+        const styledToggle = document.getElementById('styledToggle');
         const rules = [
             [/\b(OTG\d{7})\b/, 'https://cern.service-now.com/service-portal?id=outage&n={1}']
         ];
 
-        editor.addEventListener('input', () => {
-            preview.innerHTML = indicoMarkdown(editor.value, rules);
-            document.querySelectorAll('[data-math-style="display"]').forEach(async e => {
-                let math = MathJax.tex2mml(e.textContent);
-                e.innerHTML = math;
+        function render() {
+            const useStyled = styledToggle.checked;
+            const html = useStyled ? toHtml(editor.value, rules) : toUnstyledHtml(editor.value, rules);
+            preview.innerHTML = html;
+
+            // handle MathJax placeholders inserted by the renderer
+            document.querySelectorAll('[data-math-style="display"]').forEach(e => {
+                try {
+                    let math = MathJax.tex2mml(e.textContent);
+                    e.innerHTML = math;
+                } catch (err) {
+                    // ignore parsing errors
+                }
             });
-            document.querySelectorAll('[data-math-style="inline"]').forEach(async e => {
-                let math = MathJax.tex2mml(e.textContent, {display: false});
-                e.innerHTML = math;
+            document.querySelectorAll('[data-math-style="inline"]').forEach(e => {
+                try {
+                    let math = MathJax.tex2mml(e.textContent, {display: false});
+                    e.innerHTML = math;
+                } catch (err) {
+                    // ignore parsing errors
+                }
             });
-        });
+        }
+
+        editor.addEventListener('input', render);
+        styledToggle.addEventListener('change', render);
+
+        // initial render
+        render();
     </script>
     <script>
         MathJax = {
@@ -201,14 +237,26 @@
                 elements: [],
                 typeset: false,
                 pageReady: () => {
-                    setTimeout(500, () => editor.dispatchEvent(new Event('input')));
+                    // trigger an initial render after MathJax is ready
+                    setTimeout(() => {
+                        const editor = document.getElementById('editor');
+                        if (editor) {
+                            editor.dispatchEvent(new Event('input'))
+                        };
+                    }, 500);
                 }
             }
         };
     </script>
-    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-svg.js"></script>
-</head>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-svg.js"></script></head>
 <body>
+    <div class="toolbar">
+        <div class="toggle">
+            <label for="styledToggle">Styled HTML</label>
+            <input id="styledToggle" type="checkbox" checked>
+        </div>
+        <div style="color:#6b7280; font-size:13px;"></div>
+    </div>
     <div class="container">
         <textarea id="editor" placeholder="Type here...">
 # Rust-generated Indico Markdown! 🦀
