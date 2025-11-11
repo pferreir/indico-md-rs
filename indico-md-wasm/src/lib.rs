@@ -1,4 +1,7 @@
-use indico_comrak::{LinkRule, indico_markdown as _indico_markdown};
+use indico_comrak::{
+    LinkRule, indico_markdown_to_html as _indico_md_to_html,
+    indico_markdown_to_unstyled_html as _indico_md_to_unstyled_html,
+};
 use js_sys::Array;
 use wasm_bindgen::prelude::*;
 
@@ -32,8 +35,8 @@ use wasm_bindgen::prelude::*;
 /// ];
 /// const html = indicoMarkdown("See #123 and @user", rules);
 /// ```
-#[wasm_bindgen(js_name = indicoMarkdown)]
-pub fn indico_markdown(md_source: &str, js_rules: &Array) -> Result<String, JsValue> {
+#[wasm_bindgen(js_name = toHtml)]
+pub fn to_html(md_source: &str, js_rules: &Array) -> Result<String, JsValue> {
     let mut rules = Vec::new();
 
     for res in js_rules.values() {
@@ -54,5 +57,10 @@ pub fn indico_markdown(md_source: &str, js_rules: &Array) -> Result<String, JsVa
             .map_err(|e| e.to_string())?,
         );
     }
-    _indico_markdown(md_source, &rules).map_err(|e| JsValue::from_str(&e.to_string()))
+    _indico_md_to_html(md_source, &rules).map_err(|e| JsValue::from_str(&e.to_string()))
+}
+
+#[wasm_bindgen(js_name = toUnstyledHtml)]
+pub fn to_unstyled_html(md_source: &str) -> Result<String, JsValue> {
+    _indico_md_to_unstyled_html(md_source).map_err(|e| JsValue::from_str(&e.to_string()))
 }

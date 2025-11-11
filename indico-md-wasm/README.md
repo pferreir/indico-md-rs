@@ -27,35 +27,22 @@ wasm-pack build --release --target web
 Browser usage (ESM)
 ```html
 <script type="module">
-  import init, { indicoMarkdown } from "./pkg/indico_md_wasm.js";
+  import init, { toHtml } from "./pkg/indico_md_wasm.js";
 
   await init(); // loads and initializes the .wasm
 
   // pass an array of [RegExp, string] pairs for custom link rules,
   // or an empty array if you don't need custom rules.
-  const html = indicoMarkdown("# Hello\nThis is indico-md-wasm.", []);
+  const html = toHtml("# Hello\nThis is indico-md-wasm.", []);
   document.body.innerHTML = html;
 </script>
 ```
 
 Node usage (ESM)
 ```js
-import init, { indicoMarkdown } from "./pkg/indico_md_wasm.js";
+import init, { toHtml } from "./pkg/indico_md_wasm.js";
 await init();
-console.log(indicoMarkdown("**bold** text", []));
-```
-
-Node usage (CommonJS)
-```js
-// require() in CommonJS environments:
-const pkg = require("./pkg/indico_md_wasm.js");
-const init = pkg.default || pkg;
-const { indicoMarkdown } = pkg;
-
-(async () => {
-  await init();
-  console.log(indicoMarkdown("**bold** text", []));
-})();
+console.log(toHtml("**bold** text", []));
 ```
 
 Link rules example
@@ -65,12 +52,13 @@ const rules = [
   [/^@(\w+)$/, "https://example.com/users/$1"]
 ];
 
-const html = indicoMarkdown("See #123 and @user", rules);
+const html = toHtml("See #123 and @user", rules);
 ```
 
 API (exports)
-- `init(): Promise<void>` — initializes the WASM module
-- `indicoMarkdown(source: string, rules: Array): string` — converts Indico-flavored markdown to HTML; `rules` is a JS array of [RegExp, string] pairs (use `[]` when none)
+- (default) `init(): Promise<void>` — initializes the WASM module
+- `toHtml(source: string, rules: Array): string` — converts Indico-flavored markdown to HTML; `rules` is a JS array of `[RegExp, string]` pairs (use `[]` when none)
+- `toUnstyledHtml(source: string): string` — converts Indico-flavored markdown to HTML, removing all formatting, links and images (i.e. only paragraphs and line breaks)
 
 ### Tests
 ```bash

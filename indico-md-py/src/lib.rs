@@ -8,7 +8,7 @@
 //! a set of link rules defined as regular expressions and their corresponding URL replacements.
 //! It returns the resulting HTML as a string, wrapped in a PyResult to handle potential errors
 //! during the conversion process.
-use indico_comrak::{LinkRule, indico_markdown};
+use indico_comrak::{LinkRule, indico_markdown_to_html, indico_markdown_to_unstyled_html};
 use pyo3::{
     exceptions::{PyRuntimeError, PyValueError},
     prelude::*,
@@ -53,11 +53,17 @@ fn to_html(md_source: &str, link_rules: HashMap<String, String>) -> PyResult<Str
         .collect::<Result<_, _>>()
         .map_err(|e| PyValueError::new_err(e.to_string()))?;
 
-    indico_markdown(md_source, &rules).map_err(|e| PyRuntimeError::new_err(e.to_string()))
+    indico_markdown_to_html(md_source, &rules).map_err(|e| PyRuntimeError::new_err(e.to_string()))
+}
+
+#[pyfunction]
+fn to_unstyled_html(md_source: &str) -> PyResult<String> {
+    indico_markdown_to_unstyled_html(md_source).map_err(|e| PyRuntimeError::new_err(e.to_string()))
 }
 
 #[pymodule]
 fn indico_md(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(to_html, m)?)?;
+    m.add_function(wrap_pyfunction!(to_unstyled_html, m)?)?;
     Ok(())
 }
