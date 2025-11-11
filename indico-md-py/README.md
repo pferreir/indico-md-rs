@@ -21,8 +21,8 @@ maturin build --release
 
 Python API:
 ```python
-to_html(md_source: str, link_rules: Dict[str, str]) -> str
-to_unstyled_html(md_source: str) -> str
+to_html(md_source: str, /, *, link_rules: Dict[str, str] | None = None, nl2br: bool = False) -> str
+to_unstyled_html(md_source: str, nl2br: bool = False) -> str
 ```
 
 Example:

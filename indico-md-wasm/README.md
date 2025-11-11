@@ -33,7 +33,7 @@ Browser usage (ESM)
 
   // pass an array of [RegExp, string] pairs for custom link rules,
   // or an empty array if you don't need custom rules.
-  const html = toHtml("# Hello\nThis is indico-md-wasm.", []);
+  const html = toHtml("# Hello\nThis is indico-md-wasm.", [], false);
   document.body.innerHTML = html;
 </script>
 ```
@@ -42,7 +42,7 @@ Node usage (ESM)
 ```js
 import init, { toHtml } from "./pkg/indico_md_wasm.js";
 await init();
-console.log(toHtml("**bold** text", []));
+console.log(toHtml("**bold** text", [], false));
 ```
 
 Link rules example
@@ -52,13 +52,13 @@ const rules = [
   [/^@(\w+)$/, "https://example.com/users/$1"]
 ];
 
-const html = toHtml("See #123 and @user", rules);
+const html = toHtml("See #123 and @user", rules, false);
 ```
 
 API (exports)
 - (default) `init(): Promise<void>` — initializes the WASM module
-- `toHtml(source: string, rules: Array): string` — converts Indico-flavored markdown to HTML; `rules` is a JS array of `[RegExp, string]` pairs (use `[]` when none)
-- `toUnstyledHtml(source: string): string` — converts Indico-flavored markdown to HTML, removing all formatting, links and images (i.e. only paragraphs and line breaks)
+- `toHtml(source: string, rules: Array, nl2br: Boolean): string` — converts Indico-flavored markdown to HTML; `rules` is a JS array of `[RegExp, string]` pairs (use `[]` when none)
+- `toUnstyledHtml(source: string, nl2br: Boolean): string` — converts Indico-flavored markdown to HTML, removing all formatting, links and images (i.e. only paragraphs and line breaks)
 
 ### Tests
 ```bash

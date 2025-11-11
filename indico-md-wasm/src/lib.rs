@@ -36,7 +36,7 @@ use wasm_bindgen::prelude::*;
 /// const html = indicoMarkdown("See #123 and @user", rules);
 /// ```
 #[wasm_bindgen(js_name = toHtml)]
-pub fn to_html(md_source: &str, js_rules: &Array) -> Result<String, JsValue> {
+pub fn to_html(md_source: &str, js_rules: &Array, nl2br: bool) -> Result<String, JsValue> {
     let mut rules = Vec::new();
 
     for res in js_rules.values() {
@@ -57,10 +57,10 @@ pub fn to_html(md_source: &str, js_rules: &Array) -> Result<String, JsValue> {
             .map_err(|e| e.to_string())?,
         );
     }
-    _indico_md_to_html(md_source, &rules).map_err(|e| JsValue::from_str(&e.to_string()))
+    _indico_md_to_html(md_source, &rules, nl2br).map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 #[wasm_bindgen(js_name = toUnstyledHtml)]
-pub fn to_unstyled_html(md_source: &str) -> Result<String, JsValue> {
-    _indico_md_to_unstyled_html(md_source).map_err(|e| JsValue::from_str(&e.to_string()))
+pub fn to_unstyled_html(md_source: &str, nl2br: bool) -> Result<String, JsValue> {
+    _indico_md_to_unstyled_html(md_source, nl2br).map_err(|e| JsValue::from_str(&e.to_string()))
 }
