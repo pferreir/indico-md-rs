@@ -19,7 +19,7 @@ def test_output_ok():
 <li><a href="https://somewhere.else" target="_blank">gh:124</a> shouldn't be autolinked</li>
 </ul>
 """
-    assert indico_md.to_html(source, rules) == result
+    assert indico_md.to_html(source, link_rules=rules) == result
     assert (
         indico_md.to_unstyled_html(
             "## title\n[`link`](https://example.com)\\\n`more` **text**"
@@ -28,15 +28,32 @@ def test_output_ok():
     )
 
 
+def test_nl2br():
+    assert indico_md.to_html('hello\nworld') == '<p>hello\nworld</p>\n'
+    assert indico_md.to_html('hello\nworld', nl2br=True) == '<p>hello<br />\nworld</p>\n'
+    assert indico_md.to_unstyled_html('hello\nworld') == '<p>hello\nworld</p>\n'
+    assert indico_md.to_unstyled_html('hello\nworld', nl2br=True) == '<p>hello<br />\nworld</p>\n'
+
+
 def test_exceptions():
     source = "TEST"
     rules = {r"\bTKT(\d{7})\b": "https://tkt.sys/{1}", r"\bgh:(\d+)\b": 1234}
     with pytest.raises(TypeError):
-        indico_md.to_html(source, rules)
+        indico_md.to_html(source, link_rules=rules)
 
     rules = {
         r"\bTKT(\d{7})\b": "https://tkt.sys/{1}",
         r"(abc": "https://github.com/indico/indico/issues/{1}",
     }
     with pytest.raises(ValueError):
-        indico_md.to_html(source, rules)
+        indico_md.to_html(source, link_rules=rules)
+    with pytest.raises(TypeError):
+        indico_md.to_html(source, link_rules=[])
+
+
+def test_args():
+    # source is pos-only, everything else is kw-only
+    with pytest.raises(TypeError):
+        indico_md.to_html(source='')
+    with pytest.raises(TypeError):
+        indico_md.to_html('', {})

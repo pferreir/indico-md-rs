@@ -293,6 +293,7 @@ fn add_links<'t>(root: &mut Node<'t>, arena: &'t Arena<'t>, link_rules: &[LinkRu
 pub fn indico_markdown_to_html(
     md_source: &str,
     autolink_rules: &[LinkRule],
+    hardbreaks: bool,
 ) -> Result<String, fmt::Error> {
     let mut options = Options::default();
     options.extension.strikethrough = true;
@@ -307,6 +308,7 @@ pub fn indico_markdown_to_html(
     options.extension.underline = true;
     options.extension.highlight = true;
     options.render.r#unsafe = true;
+    options.render.hardbreaks = hardbreaks;
 
     let arena = Arena::new();
     let mut root = parse_document(&arena, md_source, &options);
@@ -320,7 +322,10 @@ pub fn indico_markdown_to_html(
 }
 
 /// Convert markdown to plain text, which only renders paragraphs and line breaks and ignores all other rendering
-pub fn indico_markdown_to_unstyled_html(md_source: &str) -> Result<String, fmt::Error> {
+pub fn indico_markdown_to_unstyled_html(
+    md_source: &str,
+    hardbreaks: bool,
+) -> Result<String, fmt::Error> {
     let mut options = Options::default();
     options.extension.strikethrough = true;
     options.extension.table = true;
@@ -328,6 +333,7 @@ pub fn indico_markdown_to_unstyled_html(md_source: &str) -> Result<String, fmt::
     options.extension.alerts = true;
     options.extension.underline = true;
     options.extension.highlight = true;
+    options.render.hardbreaks = hardbreaks;
 
     let arena = Arena::new();
     let root = parse_document(&arena, md_source, &options);
@@ -352,7 +358,7 @@ mod tests {
     #[test]
     fn test_highlight_text() {
         let md = r#"==This is important=="#;
-        let html = indico_markdown_to_html(md, &[]).unwrap();
+        let html = indico_markdown_to_html(md, &[], false).unwrap();
         // should include the language class and the code content
         assert_eq!(html, "<p><mark>This is important</mark></p>\n");
     }
@@ -362,7 +368,7 @@ mod tests {
         let md = r#"## TEST
  https://example.com
 "#;
-        let res = indico_markdown_to_html(md, &[]).unwrap();
+        let res = indico_markdown_to_html(md, &[], false).unwrap();
         assert_eq!(
             res,
             r##"<h2><a href="#test" aria-hidden="true" class="anchor" id="indico-md-test"></a>TEST</h2>
@@ -388,6 +394,7 @@ mod tests {
                 )
                 .unwrap(),
             ],
+            false,
         )
         .unwrap();
         assert_eq!(
@@ -402,7 +409,8 @@ mod tests {
         );
 
         let res =
-            indico_markdown_to_html("FOO", &[LinkRule::new(r"FOO", "{0}BAR").unwrap()]).unwrap();
+            indico_markdown_to_html("FOO", &[LinkRule::new(r"FOO", "{0}BAR").unwrap()], false)
+                .unwrap();
         assert_eq!(
             res,
             "<p><a href=\"FOOBAR\" title=\"FOO\" target=\"_blank\">FOO</a></p>\n"
@@ -414,6 +422,7 @@ mod tests {
                 LinkRule::new(r"(F)(O)(O)", "{1}{2}{3}BAR").unwrap(),
                 LinkRule::new(r"BAR", "FOO{0}").unwrap(),
             ],
+            false,
         )
         .unwrap();
         assert_eq!(
@@ -427,53 +436,73 @@ and <a href=\"FOOBAR\" title=\"BAR\" target=\"_blank\">BAR</a> is <a href=\"FOOB
     fn test_raw_html() {
         // raw HTML should be escaped when tagfilter is enabled
         let md = "<script>alert('x')</script>";
-        let html = indico_markdown_to_html(md, &[]).unwrap();
+        let html = indico_markdown_to_html(md, &[], false).unwrap();
         assert_eq!(html, "&lt;script>alert('x')&lt;/script>\n");
 
         let md = "<div>FOO</div>";
-        let html =
-            indico_markdown_to_html(md, &[LinkRule::new(r"FOO", "https://example/{0}").unwrap()])
-                .unwrap();
+        let html = indico_markdown_to_html(
+            md,
+            &[LinkRule::new(r"FOO", "https://example/{0}").unwrap()],
+            false,
+        )
+        .unwrap();
         assert_eq!(html, "<div>FOO</div>\n");
 
         let md = "<a href=\"http://something.com\">FOO</a>";
-        let html =
-            indico_markdown_to_html(md, &[LinkRule::new(r"FOO", "https://example/{0}").unwrap()])
-                .unwrap();
+        let html = indico_markdown_to_html(
+            md,
+            &[LinkRule::new(r"FOO", "https://example/{0}").unwrap()],
+            false,
+        )
+        .unwrap();
         assert_eq!(html, "<p><a href=\"http://something.com\">FOO</a></p>\n");
 
         // inline HTML-like tags are also escaped rather than rendered
         let md = "A <b>bold</b> move";
-        let html = indico_markdown_to_html(md, &[]).unwrap();
+        let html = indico_markdown_to_html(md, &[], false).unwrap();
         assert_eq!(html, "<p>A <b>bold</b> move</p>\n");
     }
 
     #[test]
     fn test_indico_md_to_plain() {
         let md = "[**Foo**](https://example.com)\n\n==B`ar`==<div>foo</div>";
-        let html = indico_markdown_to_unstyled_html(md).unwrap();
+        let html = indico_markdown_to_unstyled_html(md, false).unwrap();
         assert_eq!(html, "<p>Foo</p>\n<p>Barfoo</p>\n");
 
         let md = "soft\\\nvs hard break\n\nhello";
-        let html = indico_markdown_to_unstyled_html(md).unwrap();
+        let html = indico_markdown_to_unstyled_html(md, false).unwrap();
         assert_eq!(html, "<p>soft<br />\nvs hard break</p>\n<p>hello</p>\n");
 
         let md = "soft<br/>vs hard break<p>hello</p>";
-        let html = indico_markdown_to_unstyled_html(md).unwrap();
+        let html = indico_markdown_to_unstyled_html(md, false).unwrap();
         assert_eq!(html, "<p>soft<br />vs hard break<p>hello</p></p>\n");
 
         let md = "* a list\n* of\n  - nested\n* things";
-        let html = indico_markdown_to_unstyled_html(md).unwrap();
+        let html = indico_markdown_to_unstyled_html(md, false).unwrap();
         assert_eq!(
             html,
             "\n  * a list\n  * of\n    - nested\n\n\n  * things\n\n"
         );
 
         let md = "1. a list\n2. of\n    - nested\n3. ordered things";
-        let html = indico_markdown_to_unstyled_html(md).unwrap();
+        let html = indico_markdown_to_unstyled_html(md, false).unwrap();
         assert_eq!(
             html,
             "\n  1. a list\n  2. of\n    - nested\n\n\n  3. ordered things\n\n"
         );
+    }
+
+    #[test]
+    fn test_hardbreaks() {
+        // linebreaks should be converted to HTML linebreaks if enabled
+        let md = "hello\nworld";
+        let html = indico_markdown_to_unstyled_html(md, false).unwrap();
+        assert_eq!(html, "<p>hello\nworld</p>\n");
+        let html = indico_markdown_to_html(md, &[], false).unwrap();
+        assert_eq!(html, "<p>hello\nworld</p>\n");
+        let html = indico_markdown_to_unstyled_html(md, true).unwrap();
+        assert_eq!(html, "<p>hello<br />\nworld</p>\n");
+        let html = indico_markdown_to_html(md, &[], true).unwrap();
+        assert_eq!(html, "<p>hello<br />\nworld</p>\n");
     }
 }

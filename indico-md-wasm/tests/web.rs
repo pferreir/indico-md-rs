@@ -25,7 +25,7 @@ fn function_test() {
         &JsValue::from("https://github.com/indico/indico/issues/{1}"),
     ));
 
-    let res = to_html(md, &rules.into()).unwrap();
+    let res = to_html(md, &rules.into(), false).unwrap();
 
     assert_eq!(
         res,
@@ -39,14 +39,39 @@ fn function_test() {
     );
 
     assert_eq!(
-        to_unstyled_html("## title\n[`link`](https://example.com)\\\n`more` **text**").unwrap(),
+        to_unstyled_html(
+            "## title\n[`link`](https://example.com)\\\n`more` **text**",
+            false
+        )
+        .unwrap(),
         "title\n<p>link<br />\nmore text</p>\n"
     )
 }
 
 #[wasm_bindgen_test]
+fn nl2br_test() {
+    assert_eq!(
+        to_html("hello\nworld", &Array::new(), false),
+        Ok("<p>hello\nworld</p>\n".into())
+    );
+    assert_eq!(
+        to_unstyled_html("hello\nworld", false),
+        Ok("<p>hello\nworld</p>\n".into())
+    );
+    assert_eq!(
+        to_html("hello\nworld", &Array::new(), true),
+        Ok("<p>hello<br />\nworld</p>\n".into())
+    );
+    assert_eq!(
+        to_unstyled_html("hello\nworld", true),
+        Ok("<p>hello<br />\nworld</p>\n".into())
+    );
+}
+
+#[wasm_bindgen_test]
 fn interface_test() {
-    assert_eq!(to_html("", &Array::new()), Ok("".into()));
+    assert_eq!(to_html("", &Array::new(), false), Ok("".into()));
+    assert_eq!(to_html("", &Array::new(), true), Ok("".into()));
 
     let rules = Array::new();
     rules.push(&Array::of2(
@@ -54,7 +79,7 @@ fn interface_test() {
         // URL cannot be a bool, so this should fail
         &JsValue::from_bool(true),
     ));
-    let res = to_html("foo", &rules);
+    let res = to_html("foo", &rules, false);
     assert!(res.is_err());
     assert!(
         res.err()

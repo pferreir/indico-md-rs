@@ -46,19 +46,28 @@ use std::collections::HashMap;
 /// # Output: '<p>See issue <a href="https://github.com/org/repo/issues/1234">#1234</a> for details</p>'
 /// ```
 #[pyfunction]
-fn to_html(md_source: &str, link_rules: HashMap<String, String>) -> PyResult<String> {
+#[pyo3(signature=(md_source, /, *, link_rules=None, nl2br=false))]
+fn to_html(
+    md_source: &str,
+    link_rules: Option<HashMap<String, String>>,
+    nl2br: bool,
+) -> PyResult<String> {
     let rules: Vec<_> = link_rules
+        .unwrap_or_default()
         .iter()
         .map(|(re, url)| LinkRule::new(re, url))
         .collect::<Result<_, _>>()
         .map_err(|e| PyValueError::new_err(e.to_string()))?;
 
-    indico_markdown_to_html(md_source, &rules).map_err(|e| PyRuntimeError::new_err(e.to_string()))
+    indico_markdown_to_html(md_source, &rules, nl2br)
+        .map_err(|e| PyRuntimeError::new_err(e.to_string()))
 }
 
 #[pyfunction]
-fn to_unstyled_html(md_source: &str) -> PyResult<String> {
-    indico_markdown_to_unstyled_html(md_source).map_err(|e| PyRuntimeError::new_err(e.to_string()))
+#[pyo3(signature=(md_source, /, *, nl2br=false))]
+fn to_unstyled_html(md_source: &str, nl2br: bool) -> PyResult<String> {
+    indico_markdown_to_unstyled_html(md_source, nl2br)
+        .map_err(|e| PyRuntimeError::new_err(e.to_string()))
 }
 
 #[pymodule]
